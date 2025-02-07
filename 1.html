@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>生日快乐 </title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      height: 100%;
+      position: relative;
+    }
+    canvas {
+      display: block;
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <!-- 中央覆盖层，字体风格与倒计时部分一致 -->
+  <div class="center-text">生日快乐</div>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // 工具函数：返回 min 到 max 之间的随机数
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // 火箭类：从底部发射，到达一定高度后爆炸
+    class Rocket {
+      constructor() {
+        this.x = random(50, canvas.width - 50);
+        this.y = canvas.height;
+        this.vx = random(-3, 3);
+        this.vy = random(-14, -20); // 上升速度较快
+        this.gravity = 0.2;
+        this.exploded = false;
+        // 爆炸高度在画布上部随机分布
+        this.explodeHeight = random(canvas.height * 0.2, canvas.height * 0.5);
+        // 随机 HSL 颜色
+        this.color = "hsl(" + Math.floor(random(0, 360)) + ",100%,50%)";
+      }
+      update() {
+        if (!this.exploded) {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vy += this.gravity;
+          // 当火箭达到顶点或降速时爆炸
+          if (this.vy >= 0 || this.y <= this.explodeHeight) {
+            this.exploded = true;
+            createExplosion(this.x, this.y, this.color);
+          }
+        }
+      }
+      draw() {
+        if (!this.exploded) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+          ctx.closePath();
+          ctx.restore();
+        }
+      }
+    }
+
+    // 粒子类：爆炸后产生的粒子
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.speed = random(3, 12);
+        this.angle = random(0, Math.PI * 2);
+        this.vx = Math.cos(this.angle) * this.speed;
+        this.vy = Math.sin(this.angle) * this.speed;
+        this.friction = 0.95;
+        this.gravity = 0.3;
+        this.alpha = 1;
+        this.decay = random(0.02, 0.04);
+        this.radius = random(1, 3);
+      }
+      update() {
+        this.vx *= this.friction;
+        this.vy *= this.friction;
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
+      }
+    }
+
+    let rockets = [];
+    let particles = [];
+
+    // 当火箭爆炸时创建大量粒子，营造炸裂效果
+    function createExplosion(x, y, color) {
+      const count = Math.floor(random(150, 250));  // 粒子数量增多
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color));
+      }
+    }
+
+    // 更新火箭和粒子状态
+    function update() {
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        rockets[i].update();
+        if (rockets[i].exploded) {
+          rockets.splice(i, 1);
+        }
+      }
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // 绘制画面，使用半透明黑色清除画布（产生拖尾效果）
+    function draw() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // 混合模式使烟花爆炸部分更亮
+      ctx.globalCompositeOperation = "lighter";
+      rockets.forEach(rocket => rocket.draw());
+      particles.forEach(particle => particle.draw());
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function loop() {
+      requestAnimationFrame(loop);
+      update();
+      draw();
+    }
+
+    // 发射火箭
+    function launchRocket() {
+      rockets.push(new Rocket());
+    }
+
+    // 鼠标点击时也发射火箭
+    canvas.addEventListener("click", () => {
+      rockets.push(new Rocket());
+    });
+
+    // 提高火箭发射频率：每 200 毫秒发射一枚
+    setInterval(launchRocket, 200);
+
+    loop();
+  </script>
+</body>
+<audio id="music" src="./happybirthday.mp3" autoplay preload="auto" loop="loop">该浏览器不支持audio属性</audio>
+
+</html>

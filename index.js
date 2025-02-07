@@ -3,7 +3,7 @@ var S = {
         S.Drawing.init('.canvas');
         document.body.classList.add('body--ready');
             //想说什么
-            S.UI.simulate("祝你|生日快乐哟|#countdown 3|#rectangle 15x15|#circle 12 |#time");
+            S.UI.simulate("张清玥|祝你|生日快乐|么么哒|#countdown 3|#rectangle 15x15|#circle 12 |#time");
             S.Drawing.loop(function () {
                 S.Shape.render();
             });
@@ -100,20 +100,20 @@ var S = {
                 value = getValue(current);
                 switch (action) {
                     case 'countdown':
-                    value = parseInt(value) || 10;
-                    value = value > 0 ? value : 10;
-                    timedAction(function (index) {
-                        if (index === 0) {
-                            if (sequence.length === 0) {
-                                S.Shape.switchShape(S.ShapeBuilder.letter(''));
-                            } else {
-                                performAction(sequence);
-                            }
-                        } else {
-                            S.Shape.switchShape(S.ShapeBuilder.letter(index), true);
-                        }
-                    }, 1000, value, true);
-                    break;
+    value = parseInt(value) || 10;
+    value = value > 0 ? value : 10;
+    timedAction(function (index) {
+        if (index === 0) {
+            // 倒计时结束，无论 sequence 是否为空都直接跳转
+            S.Shape.switchShape(S.ShapeBuilder.letter(''));
+            console.log("Countdown finished, redirecting to 1.html");
+            window.location.href = "1.html";  // 确保路径正确
+        } else {
+            S.Shape.switchShape(S.ShapeBuilder.letter(index), true);
+        }
+    }, 1000, value, true);
+    break;
+                        
                     case 'rectangle':
                     value = value && value.split('x');
                     value = (value && value.length === 2) ? value : [maxShapeSize, maxShapeSize / 2];
